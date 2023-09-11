@@ -470,6 +470,16 @@ public:
         return *this;
     }
 
+    /// Write scalar to variable node with UA_DataType.
+    /// @return Current node instance to chain multiple methods (fluent interface)
+    template <typename T>
+    Node& writeValueScalar(const T& value, UA_DataType &type) {
+        // NOLINTNEXTLINE, variant isn't modified, try to avoid copy
+        const auto variant = Variant::fromScalar<T>(const_cast<T&>(value), type);
+        writeValue(variant);
+        return *this;
+    }
+
     /// @copydoc writeValueScalar
     template <typename T>
     [[deprecated("Use Node::writeValueScalar instead")]] Node& writeScalar(const T& value) {
@@ -483,6 +493,16 @@ public:
         writeValue(Variant::fromArray(array));
         return *this;
     }
+
+
+    /// Write array value to variable node with UA_DataType.
+    /// @return Current node instance to chain multiple methods (fluent interface)
+    template <typename T>
+    Node& writeValueArray(Span<T> array, UA_DataType &type) {
+        writeValue(Variant::fromArray(array, type));
+        return *this;
+    }
+
 
     /// @overload
     template <typename ArrayLike>
