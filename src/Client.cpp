@@ -180,11 +180,11 @@ public:
         running_ = true;
         try {
             while (running_) {
-                runIterate(1000);
+                runIterate(0);
             }
         } catch (...) {
             running_ = false;
-            throw;
+            // throw;
         }
     }
 
