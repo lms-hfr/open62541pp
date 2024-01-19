@@ -36,6 +36,9 @@ struct ValueCallback;
  * Exposes the most common functionality. Use the handle() method to get access the underlying
  * UA_Server instance and use the full power of open6254.
  */
+
+typedef void (*OnServerRegisteredCallback)(char*);
+
 class Server {
 public:
     /**
@@ -126,6 +129,23 @@ public:
     Event createEvent(const NodeId& eventType = ObjectTypeId::BaseEventType);
 #endif
 
+    /// Set ServerName
+    void setServerName(std::string name);
+
+    /// Discovery Service
+    /// Enable Discovery Service
+    void setEnableDiscovery();
+
+    /// Register itself on discovery server
+    void registerOnDiscoveryServer(std::string url);
+
+    /// Unregister from discovery server
+    void unregisterFromDiscoveryServer();
+    
+    /// set callback on discovery server for signalling
+    /// other server has registered itself
+    void setOnServerRegisteredCallback(OnServerRegisteredCallback callback);
+
     /// Run a single iteration of the server's main loop.
     /// @returns Maximum wait period until next Server::runIterate call (in ms)
     uint16_t runIterate();
@@ -152,6 +172,10 @@ public:
 private:
     class Connection;
     std::shared_ptr<Connection> connection_;
+
+#ifdef UA_ENABLE_DISCOVERY
+    Client* clientRegister_;
+#endif
 };
 
 /* ---------------------------------------------------------------------------------------------- */

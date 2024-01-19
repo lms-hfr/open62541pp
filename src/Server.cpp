@@ -7,6 +7,7 @@
 #include <utility>  // move
 
 #include "open62541pp/AccessControl.h"
+#include "open62541pp/Client.h"
 #include "open62541pp/Config.h"
 #include "open62541pp/DataType.h"
 #include "open62541pp/ErrorHandling.h"
@@ -64,8 +65,10 @@ public:
     Connection& operator=(Connection&&) noexcept = delete;
 
     void runStartup() {
-        const auto status = UA_Server_run_startup(handle());
-        throwIfBad(status);
+        if (!running_) {
+            const auto status = UA_Server_run_startup(handle());
+            throwIfBad(status);
+        }
         running_ = true;
     }
 
@@ -81,7 +84,7 @@ public:
             return;
         }
         runStartup();
-        const std::lock_guard<std::mutex> lock(mutex_);
+        // const std::lock_guard<std::mutex> lock(mutex_);
         while (running_) {
             // https://github.com/open62541/open62541/blob/master/examples/server_mainloop.c
             UA_Server_run_iterate(handle(), true /* wait for messages in the networklayer */);
@@ -91,7 +94,7 @@ public:
     void stop() {
         running_ = false;
         // wait for run loop to complete
-        const std::lock_guard<std::mutex> lock(mutex_);
+        // const std::lock_guard<std::mutex> lock(mutex_);
         const auto status = UA_Server_run_shutdown(handle());
         throwIfBad(status);
     }
@@ -230,6 +233,124 @@ void Server::setProductUri(std::string_view uri) {
     auto& ref = asWrapper<String>(getConfig(this)->applicationDescription.productUri);
     ref = String(uri);
     copyApplicationDescriptionToEndpoints(getConfig(this));
+}
+
+void Server::setServerName(std::string name __attribute_maybe_unused__) {
+#ifdef UA_ENABLE_DISCOVERY
+    getConfig(this)->mdnsConfig.mdnsServerName = UA_String_fromChars(name.c_str());
+#endif
+}
+
+void Server::registerOnDiscoveryServer(std::string url __attribute_maybe_unused__) {
+#ifdef UA_ENABLE_DISCOVERY
+    clientRegister_ = new Client();
+
+    UA_UInt64 callbackId;
+    throwIfBad(UA_Server_addPeriodicServerRegisterCallback(
+        this->handle(), clientRegister_->handle(), url.c_str(), 10 * 60 * 1000, 500, &callbackId
+    ));
+#endif
+}
+
+void Server::unregisterFromDiscoveryServer(void) {
+#ifdef UA_ENABLE_DISCOVERY
+    throwIfBad(UA_Server_unregister_discovery(this->handle(), clientRegister_->handle()));
+
+    delete clientRegister_;
+#endif
+}
+
+void Server::setEnableDiscovery() {
+#ifdef UA_ENABLE_DISCOVERY
+    /// Make sure servername is set
+    if (UA_String_equal(&getConfig(this)->mdnsConfig.mdnsServerName, &UA_STRING_NULL)) {
+        return;
+    }
+
+    getConfig(this)->applicationDescription.applicationType = UA_APPLICATIONTYPE_SERVER;
+
+    // Enable the mDNS announce and response functionality
+    getConfig(this)->mdnsEnabled = true;
+
+    // Set applicationuri to reflect mDNS
+    std::string applicationUri = std::string(
+        asWrapper<String>(getConfig(this)->applicationDescription.applicationUri)
+    );
+
+#ifdef UA_ENABLE_DISCOVERY_MULTICAST
+    applicationUri += ".multicast";
+
+    getConfig(this)->mdnsConfig.serverCapabilitiesSize = 2;
+    UA_String* caps = (UA_String*)UA_Array_new(2, &UA_TYPES[UA_TYPES_STRING]);
+    caps[0] = UA_String_fromChars("LDS");
+    caps[1] = UA_String_fromChars("NA");
+    getConfig(this)->mdnsConfig.serverCapabilities = caps;
+
+#else
+    applicationUri += ".lds";
+
+    // See http://www.opcfoundation.org/UA/schemas/1.03/ServerCapabilities.csv
+    // For a LDS server, you should only indicate the LDS capability.
+    // If this instance is an LDS and at the same time a normal OPC UA server, you also have to
+    // indicate the additional capabilities. NOTE: UaExpert does not show LDS-only servers in the
+    // list. See also: https://forum.unified-automation.com/topic1987.html
+    getConfig(this)->mdnsConfig.serverCapabilitiesSize = 1;
+    UA_String* caps = (UA_String*)UA_Array_new(2, &UA_TYPES[UA_TYPES_STRING]);
+    caps[0] = UA_String_fromChars("LDS");
+    getConfig(this)->mdnsConfig.serverCapabilities = caps;
+#endif
+
+    // set Names
+    getConfig(this)->applicationDescription.applicationUri = UA_String_fromChars(
+        applicationUri.c_str()
+    );
+
+    // set IP
+    getConfig(this)->mdnsInterfaceIP = UA_String_fromChars("127.0.0.1");
+#endif
+}
+
+void Server::setOnServerRegisteredCallback(OnServerRegisteredCallback callback __attribute_maybe_unused__) {
+#ifdef UA_ENABLE_DISCOVERY_MULTICAST
+    auto serverOnNetworkCallback =
+        [](const UA_ServerOnNetwork* serverOnNetwork,
+           UA_Boolean isServerAnnounce,
+           UA_Boolean isTxtReceived,
+           void* data) {
+            static char* discovery_url = NULL;
+
+            if (discovery_url != NULL || !isServerAnnounce) {
+                return;  // we already have everything we need or we only want server announces
+            }
+
+            if (!isTxtReceived) {
+                return;  // we wait until the corresponding TXT record is announced.
+                         // Problem: how to handle if a Server does not announce the
+                         // optional TXT?
+            }
+
+            // here you can filter for a specific LDS server, e.g. call FindServers on
+            // the serverOnNetwork to make sure you are registering with the correct
+            // LDS. We will ignore this for now
+            if (discovery_url != NULL) {
+                UA_free(discovery_url);
+            }
+            discovery_url = (char*)UA_malloc(serverOnNetwork->discoveryUrl.length + 1);
+            memcpy(
+                discovery_url,
+                serverOnNetwork->discoveryUrl.data,
+                serverOnNetwork->discoveryUrl.length
+            );
+
+            discovery_url[serverOnNetwork->discoveryUrl.length] = 0;
+
+            // signal to upper layers
+            ((OnServerRegisteredCallback)data)(discovery_url);
+        };
+
+    // call services
+    UA_Server_setServerOnNetworkCallback(this->handle(), serverOnNetworkCallback, (void*)callback);
+#endif
 }
 
 void Server::setAccessControl(AccessControlBase& accessControl) {
