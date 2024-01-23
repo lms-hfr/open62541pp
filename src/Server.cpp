@@ -260,14 +260,12 @@ void Server::unregisterFromDiscoveryServer(void) {
 #endif
 }
 
-void Server::setEnableDiscovery() {
-#ifdef UA_ENABLE_DISCOVERY
+void Server::setEnableDiscovery(bool enable_mDNS) {
+#ifdef UA_ENABLE_DISCOVERY_MULTICAST
     /// Make sure servername is set
     if (UA_String_equal(&getConfig(this)->mdnsConfig.mdnsServerName, &UA_STRING_NULL)) {
         return;
     }
-
-    getConfig(this)->applicationDescription.applicationType = UA_APPLICATIONTYPE_SERVER;
 
     // Enable the mDNS announce and response functionality
     getConfig(this)->mdnsEnabled = true;
@@ -277,40 +275,46 @@ void Server::setEnableDiscovery() {
         asWrapper<String>(getConfig(this)->applicationDescription.applicationUri)
     );
 
-#ifdef UA_ENABLE_DISCOVERY_MULTICAST
-    applicationUri += ".multicast";
+    if (!enable_mDNS) {
+        // See http://www.opcfoundation.org/UA/schemas/1.03/ServerCapabilities.csv
+        // For a LDS server, you should only indicate the LDS capability.
+        // If this instance is an LDS and at the same time a normal OPC UA server, you also have to
+        // indicate the additional capabilities. NOTE: UaExpert does not show LDS-only servers in
+        // the list. See also: https://forum.unified-automation.com/topic1987.html
+        getConfig(this)->applicationDescription.applicationType =
+            UA_APPLICATIONTYPE_DISCOVERYSERVER;
 
-    getConfig(this)->mdnsConfig.serverCapabilitiesSize = 2;
-    UA_String* caps = (UA_String*)UA_Array_new(2, &UA_TYPES[UA_TYPES_STRING]);
-    caps[0] = UA_String_fromChars("LDS");
-    caps[1] = UA_String_fromChars("NA");
-    getConfig(this)->mdnsConfig.serverCapabilities = caps;
+        applicationUri += ".lds";
 
-#else
-    applicationUri += ".lds";
+        getConfig(this)->mdnsConfig.serverCapabilitiesSize = 1;
+        UA_String* caps = (UA_String*)UA_Array_new(2, &UA_TYPES[UA_TYPES_STRING]);
+        caps[0] = UA_String_fromChars("LDS");
+        getConfig(this)->mdnsConfig.serverCapabilities = caps;
+    } else {
 
-    // See http://www.opcfoundation.org/UA/schemas/1.03/ServerCapabilities.csv
-    // For a LDS server, you should only indicate the LDS capability.
-    // If this instance is an LDS and at the same time a normal OPC UA server, you also have to
-    // indicate the additional capabilities. NOTE: UaExpert does not show LDS-only servers in the
-    // list. See also: https://forum.unified-automation.com/topic1987.html
-    getConfig(this)->mdnsConfig.serverCapabilitiesSize = 1;
-    UA_String* caps = (UA_String*)UA_Array_new(2, &UA_TYPES[UA_TYPES_STRING]);
-    caps[0] = UA_String_fromChars("LDS");
-    getConfig(this)->mdnsConfig.serverCapabilities = caps;
-#endif
+        getConfig(this)->applicationDescription.applicationType = UA_APPLICATIONTYPE_SERVER;
 
+        applicationUri += ".multicast";
+
+        getConfig(this)->mdnsConfig.serverCapabilitiesSize = 2;
+        UA_String* caps = (UA_String*)UA_Array_new(2, &UA_TYPES[UA_TYPES_STRING]);
+        caps[0] = UA_String_fromChars("LDS");
+        caps[1] = UA_String_fromChars("NA");
+        getConfig(this)->mdnsConfig.serverCapabilities = caps;
+    }
     // set Names
     getConfig(this)->applicationDescription.applicationUri = UA_String_fromChars(
         applicationUri.c_str()
     );
 
-    // set IP
-    getConfig(this)->mdnsInterfaceIP = UA_String_fromChars("127.0.0.1");
+    // set IP - listen on all interfaces
+    getConfig(this)->mdnsInterfaceIP = UA_String_fromChars("0.0.0.0");
 #endif
 }
 
-void Server::setOnServerRegisteredCallback(OnServerRegisteredCallback callback __attribute_maybe_unused__) {
+void Server::setOnServerRegisteredCallback(
+    OnServerRegisteredCallback callback __attribute_maybe_unused__
+) {
 #ifdef UA_ENABLE_DISCOVERY_MULTICAST
     auto serverOnNetworkCallback =
         [](const UA_ServerOnNetwork* serverOnNetwork,
