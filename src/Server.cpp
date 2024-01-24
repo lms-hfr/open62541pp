@@ -311,34 +311,18 @@ void Server::setEnableDiscovery(bool enable_mDNS) {
     getConfig(this)->mdnsInterfaceIP = UA_String_fromChars("0.0.0.0");
 #endif
 }
-
+ 
 void Server::setOnServerRegisteredCallback(
     OnServerRegisteredCallback callback __attribute_maybe_unused__
 ) {
 #ifdef UA_ENABLE_DISCOVERY_MULTICAST
     auto serverOnNetworkCallback =
         [](const UA_ServerOnNetwork* serverOnNetwork,
-           UA_Boolean isServerAnnounce,
-           UA_Boolean isTxtReceived,
+           UA_Boolean isServerAnnounce __attribute_maybe_unused__,
+           UA_Boolean isTxtReceived __attribute_maybe_unused__,
            void* data) {
-            static char* discovery_url = NULL;
 
-            if (discovery_url != NULL || !isServerAnnounce) {
-                return;  // we already have everything we need or we only want server announces
-            }
-
-            if (!isTxtReceived) {
-                return;  // we wait until the corresponding TXT record is announced.
-                         // Problem: how to handle if a Server does not announce the
-                         // optional TXT?
-            }
-
-            // here you can filter for a specific LDS server, e.g. call FindServers on
-            // the serverOnNetwork to make sure you are registering with the correct
-            // LDS. We will ignore this for now
-            if (discovery_url != NULL) {
-                UA_free(discovery_url);
-            }
+            char* discovery_url = NULL;
             discovery_url = (char*)UA_malloc(serverOnNetwork->discoveryUrl.length + 1);
             memcpy(
                 discovery_url,
