@@ -9,7 +9,7 @@ project(
 )
 
 # set c++ standard explicitly, compile feature "cxx_std_17" does not set -std=c++17 compile flag
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -93,7 +93,7 @@ if(UAPP_INTERNAL_OPEN62541)
         set(UA_FORCE_WERROR OFF OFF CACHE BOOL "")
     endif()
 
-    set(OPEN62541_VERSION v1.3.9)  # set manually for CI
+    set(OPEN62541_VERSION v1.4.0)  # set manually for CI
     add_subdirectory(3rdparty/open62541)  # target open62541::open62541
 else()
     find_package(open62541 REQUIRED)

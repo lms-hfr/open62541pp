@@ -239,9 +239,10 @@ inline static void copyApplicationDescriptionToEndpoints(Server& server) {
     }
 }
 
-void Server::setCustomHostname(std::string_view hostname) {
-    asWrapper<String>(detail::getConfig(*this).customHostname) = String(hostname);
-}
+//void Server::setCustomHostname(std::string_view hostname) {
+//    auto& ref = asWrapper<String>(getConfig(this)->customHostname);
+//    ref = String(hostname);
+//}
 
 void Server::setApplicationName(std::string_view name) {
     getApplicationDescription(*this).getApplicationName() = LocalizedText("", name);

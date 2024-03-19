@@ -112,7 +112,8 @@ struct AsyncServiceAdapter {
 };
 
 template <typename Request, typename Response, typename TransformResponse, typename CompletionToken>
-auto sendRequest(
+//auto sendRequest(
+static auto sendRequest(
     Client& client,
     const Request& request,
     TransformResponse&& transformResponse,
