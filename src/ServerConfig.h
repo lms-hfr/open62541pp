@@ -28,7 +28,7 @@ public:
 
     void setLogger(Logger logger) {
         if (logger) {
-            logger_.assign(LoggerAdapter(std::move(logger)));
+         //   logger_.assign(LoggerAdapter(std::move(logger)));
         }
     }
 
@@ -101,7 +101,7 @@ private:
 
     UA_ServerConfig& config_;
     CustomDataTypes customDataTypes_{config_.customDataTypes};
-    PluginManager<UA_Logger> logger_{config_.logger};
+    PluginManager<const UA_Logger*> logger_{config_.logging};
     PluginManager<UA_AccessControl> accessControl_{config_.accessControl};
 };
 

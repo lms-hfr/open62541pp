@@ -111,6 +111,7 @@ struct AsyncServiceAdapter {
     }
 };
 
+#pragma optimize( "", off )
 template <typename Request, typename Response, typename TransformResponse, typename CompletionToken>
 //auto sendRequest(
 static auto sendRequest(
@@ -160,5 +161,5 @@ static auto sendRequest(
 
     return std::invoke(std::forward<TransformResponse>(transformResponse), response);
 }
-
+#pragma optimize( "", on )
 }  // namespace opcua::services::detail

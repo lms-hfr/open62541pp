@@ -9,7 +9,7 @@
 
 namespace opcua {
 
-static void logImpl(UA_Logger& logger, LogLevel level, LogCategory category, std::string_view msg) {
+static void logImpl(const UA_Logger& logger, LogLevel level, LogCategory category, std::string_view msg) {
     if (logger.log == nullptr) {
         return;
     }
@@ -26,7 +26,7 @@ static void logImpl(UA_Logger& logger, LogLevel level, LogCategory category, std
 void log(UA_Client* client, LogLevel level, LogCategory category, std::string_view msg) {
     auto* config = detail::getConfig(client);
     if (config != nullptr) {
-        logImpl(config->logger, level, category, msg);
+        logImpl(*(config->logging), level, category, msg);
     }
 }
 
@@ -37,7 +37,7 @@ void log(Client& client, LogLevel level, LogCategory category, std::string_view 
 void log(UA_Server* server, LogLevel level, LogCategory category, std::string_view msg) {
     auto* config = detail::getConfig(server);
     if (config != nullptr) {
-        logImpl(config->logger, level, category, msg);
+        logImpl(*config->logging, level, category, msg);
     }
 }
 
