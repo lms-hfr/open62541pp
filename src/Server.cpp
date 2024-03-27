@@ -236,6 +236,9 @@ void Server::setProductUri(std::string_view uri) {
 }
 
 void Server::setServerName(std::string name __attribute_maybe_unused__) {
+    // customhostname is signaled to discoveryserver
+    getConfig(this)->customHostname = UA_String_fromChars(name.c_str());
+
 #ifdef UA_ENABLE_DISCOVERY
     getConfig(this)->mdnsConfig.mdnsServerName = UA_String_fromChars(name.c_str());
 #endif
@@ -311,7 +314,7 @@ void Server::setEnableDiscovery(bool enable_mDNS) {
     getConfig(this)->mdnsInterfaceIP = UA_String_fromChars("0.0.0.0");
 #endif
 }
- 
+
 void Server::setOnServerRegisteredCallback(
     OnServerRegisteredCallback callback __attribute_maybe_unused__
 ) {
@@ -321,7 +324,6 @@ void Server::setOnServerRegisteredCallback(
            UA_Boolean isServerAnnounce __attribute_maybe_unused__,
            UA_Boolean isTxtReceived __attribute_maybe_unused__,
            void* data) {
-
             char* discovery_url = NULL;
             discovery_url = (char*)UA_malloc(serverOnNetwork->discoveryUrl.length + 1);
             memcpy(
