@@ -134,7 +134,7 @@ public:
 
     /// Discovery Service
     /// Enable Discovery Service
-    void setEnableDiscovery(bool enable_mDNS);
+    void setEnableDiscovery(bool enable_mDNS, std::string p_host_name);
 
     /// Register itself on discovery server
     void registerOnDiscoveryServer(std::string url);

@@ -263,7 +263,7 @@ void Server::unregisterFromDiscoveryServer(void) {
 #endif
 }
 
-void Server::setEnableDiscovery(bool enable_mDNS) {
+void Server::setEnableDiscovery(bool enable_mDNS, std::string p_host_name) {
 #ifdef UA_ENABLE_DISCOVERY_MULTICAST
     /// Make sure servername is set
     if (UA_String_equal(&getConfig(this)->mdnsConfig.mdnsServerName, &UA_STRING_NULL)) {
@@ -311,7 +311,7 @@ void Server::setEnableDiscovery(bool enable_mDNS) {
     );
 
     // set IP - listen on all interfaces
-    getConfig(this)->mdnsInterfaceIP = UA_String_fromChars("0.0.0.0");
+    getConfig(this)->mdnsInterfaceIP = UA_String_fromChars(p_host_name.c_str());
 #endif
 }
 
