@@ -111,7 +111,9 @@ struct AsyncServiceAdapter {
     }
 };
 
-#pragma optimize( "", off )
+#pragma GCC push_options
+#pragma GCC optimize ("O0")
+
 template <typename Request, typename Response, typename TransformResponse, typename CompletionToken>
 //auto sendRequest(
 static auto sendRequest(
@@ -161,5 +163,9 @@ static auto sendRequest(
 
     return std::invoke(std::forward<TransformResponse>(transformResponse), response);
 }
-#pragma optimize( "", on )
+
+
+#pragma GCC pop_options
+
+
 }  // namespace opcua::services::detail

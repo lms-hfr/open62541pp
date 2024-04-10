@@ -25,7 +25,12 @@ template <>
 DataValue readAttribute<Client>(
     Client& client, const NodeId& id, AttributeId attributeId, TimestampsToReturn timestamps
 ) {
-    return readAttributeAsync(client, id, attributeId, timestamps, detail::SyncOperation{});
+     return readAttributeAsync(client, id, attributeId, timestamps, detail::SyncOperation{});
+
+ //   auto future = readAttributeAsync(client, id, attributeId, timestamps);
+ //   client.runIterate();
+ //   auto result = future.get();
+ //   return result;
 }
 
 WriteResponse write(Client& client, const WriteRequest& request) {

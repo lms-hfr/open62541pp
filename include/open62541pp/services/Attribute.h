@@ -23,6 +23,8 @@
 #include "open62541pp/types/NodeId.h"
 #include "open62541pp/types/Variant.h"
 
+#include "open62541pp/DataType.h"
+
 namespace opcua::services {
 
 /* -------------------------------------- Generic functions ------------------------------------- */
@@ -115,12 +117,15 @@ auto readAttributeAsync(
 ) {
     auto item = detail::createReadValueId(id, attributeId);
     auto request = detail::createReadRequest(timestamps, item);
-    return detail::sendRequest<UA_ReadRequest, UA_ReadResponse>(
+
+    detail::sendRequest<UA_ReadRequest, UA_ReadResponse, std::function<DataValue(UA_ReadResponse&)>, CompletionToken>(
         client,
         request,
         [](UA_ReadResponse& response) { return detail::getReadResult(response); },
         std::forward<CompletionToken>(token)
     );
+
+    return ;
 }
 
 /**

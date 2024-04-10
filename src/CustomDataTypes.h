@@ -22,6 +22,7 @@ public:
             nullptr,  // next
             dataTypes_.size(),
             asNative(dataTypes_.data()),
+            false // is this correct? I added it just to get rid of a warning....
         });
         wrapped_ = array_.get();
     }

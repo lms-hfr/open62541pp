@@ -28,7 +28,7 @@ public:
 
     void setLogger(Logger logger) {
         if (logger) {
-         //   logger_.assign(LoggerAdapter(std::move(logger)));
+        //    logger_.assign(LoggerAdapter(std::move(logger)));
         }
     }
 
