@@ -21,6 +21,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+set(CMAKE_INSTALL_PREFIX "/opt/sdk/sysroots/core2-64-lms-linux/usr/hfr/open62541pp/")
+
 option(UAPP_ENABLE_COVERAGE "Enable coverage reporting for gcc/clang" OFF)
 option(UAPP_WARNINGS_AS_ERRORS "Treat warnings as errors" OFF)
 
@@ -68,6 +72,8 @@ else()
 endif()
 
 set(UA_ENABLE_PUBSUB ON)
+set(UA_ENABLE_DISCOVERY ON)
+set(UA_ENABLE_DISCOVERY_MULTICAST ON)
 
 # threads
 find_package(Threads REQUIRED)

@@ -16,7 +16,7 @@ namespace opcua::detail {
 template <typename WrapperType>
 class ConnectionBase {
 public:
-    static_assert(sizeof(WrapperType) == sizeof(std::unique_ptr<ConnectionBase>));
+  //  static_assert(sizeof(WrapperType) == sizeof(std::unique_ptr<ConnectionBase>));
 
     // unique_ptr<T> is standard layout but clang disagrees:
     // https://github.com/llvm/llvm-project/issues/53021

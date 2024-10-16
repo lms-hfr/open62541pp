@@ -60,6 +60,9 @@ ServerContext& getContext(Server& server) noexcept;
  * Exposes the most common functionality. Use the handle() method to get access the underlying
  * UA_Server instance and use the full power of open6254.
  */
+
+typedef void (*OnServerRegisteredCallback)(char*);
+
 class Server {
 public:
     /**
@@ -164,6 +167,21 @@ public:
     Event createEvent(const NodeId& eventType = ObjectTypeId::BaseEventType);
 #endif
 
+    /// Set ServerName
+    void setServerName(std::string name);
+
+    /// Discovery Service
+    /// Enable Discovery Service
+    void setEnableDiscovery();
+    /// Register itself on discovery server
+    void registerOnDiscoveryServer(std::string url);
+    /// Unregister from discovery server
+    void unregisterFromDiscoveryServer(std::string url);
+    
+    /// set callback on discovery server for signalling
+    /// other server has registered itself
+    void setOnServerRegisteredCallback(OnServerRegisteredCallback callback);
+
     /// Run a single iteration of the server's main loop.
     /// @return Maximum wait period until next Server::runIterate call (in ms)
     uint16_t runIterate();
@@ -185,6 +203,10 @@ public:
 
 private:
     friend detail::ServerConnection& detail::getConnection(Server& server) noexcept;
+
+    #ifdef UA_ENABLE_DISCOVERY
+    Client* clientRegister_;
+    #endif
 
     std::unique_ptr<detail::ServerConnection> connection_;
 };
