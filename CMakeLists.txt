@@ -23,8 +23,6 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-set(CMAKE_INSTALL_PREFIX "/opt/sdk/sysroots/core2-64-lms-linux/usr/hfr/open62541pp/")
-
 option(UAPP_ENABLE_COVERAGE "Enable coverage reporting for gcc/clang" OFF)
 option(UAPP_WARNINGS_AS_ERRORS "Treat warnings as errors" OFF)
 
