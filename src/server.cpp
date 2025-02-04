@@ -270,13 +270,13 @@ void Server::setProductUri(std::string_view uri) {
     copyApplicationDescriptionToEndpoints(*this);
 }
 ////////////
-void Server::setServerName(std::string name __attribute_maybe_unused__) {
+void Server::setServerName([[maybe_unused]] std::string name) {
 #ifdef UA_ENABLE_DISCOVERY
     detail::getConfig(*this).mdnsConfig.mdnsServerName = UA_String_fromChars(name.c_str());
 #endif
 }
 
-void Server::registerOnDiscoveryServer(std::string url __attribute_maybe_unused__)
+void Server::registerOnDiscoveryServer([[maybe_unused]] std::string url)
 {
 #ifdef UA_ENABLE_DISCOVERY
     UA_ClientConfig cc;
@@ -300,7 +300,7 @@ void Server::registerOnDiscoveryServer(std::string url __attribute_maybe_unused_
 #endif
 }
 
-void Server::unregisterFromDiscoveryServer(std::string url __attribute_maybe_unused__)
+void Server::unregisterFromDiscoveryServer([[maybe_unused]] std::string url)
 {
 #ifdef UA_ENABLE_DISCOVERY
     //  throwIfBad(UA_Server_unregister_discovery(this->handle(), clientRegister_->handle()));
@@ -360,7 +360,7 @@ void Server::setEnableDiscovery()
 #endif
 }
 
-void Server::setOnServerRegisteredCallback(OnServerRegisteredCallback callback __attribute_maybe_unused__) {
+void Server::setOnServerRegisteredCallback([[maybe_unused]] OnServerRegisteredCallback callback) {
 #ifdef UA_ENABLE_DISCOVERY_MULTICAST
     auto serverOnNetworkCallback =
         [](const UA_ServerOnNetwork* serverOnNetwork,
